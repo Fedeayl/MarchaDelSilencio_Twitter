@@ -1,0 +1,156 @@
+---
+title: "Most_popular"
+author: "Federico Acosta y Lara"
+date: "7/5/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Importar data
+```{r importar data}
+
+#Librerias necesarias
+library(ggplot2)
+library(dplyr)
+library(wesanderson) #Paleta de colores
+library(patchwork) #Para ploteo conjunto
+library(kableExtra) #Para el armado de tablas
+
+#Bases de datos (rtweet)
+Oficiales <- rio::import(here::here("Data", "Raw data", "hashtagoficiales.csv"))
+Alternativos <- rio::import(here::here("Data", "Raw data", "AlternativosR.csv"))
+Tupamaros <- rio::import(here::here("Data", "Raw data", "TupamarosR.csv"))
+
+
+```
+
+
+Las 10 cuentas con los tweets más populares (por retweets)
+```{r}
+
+PopOficiales <- Oficiales %>% 
+                filter(., isRetweet == FALSE) %>% #Elimina los retweets
+                arrange(., desc(retweetCount)) %>% #Ordena decreciente por rt
+                select(., c(screenName, retweetCount)) %>% #Selecciona las columnas
+                top_n(.,10) # top 10 de los tweets más retwitteados 
+
+
+PopTupamaros <- Tupamaros %>% 
+                filter(., isRetweet == FALSE) %>% 
+                arrange(., desc(retweetCount)) %>% 
+                select(., c(screenName, retweetCount)) %>% 
+                top_n(.,10)
+                
+                        
+PopAlternativos <- Alternativos %>% 
+                   filter(., isRetweet == FALSE) %>% 
+                   arrange(., desc(retweetCount)) %>% 
+                   select(., c(screenName, retweetCount)) %>% 
+                   top_n(.,10)
+
+
+```
+
+
+Las 10 cuentas con los tweets más populares (por cantidad de likes)
+```{r}
+FavOficiales <- Oficiales %>% 
+                filter(., isRetweet == FALSE) %>% #Elimina los retweets
+                arrange(., desc(favoriteCount)) %>% #Ordena decreciente por favs
+                select(., c(screenName, favoriteCount)) %>% #Selecciona las columnas
+                top_n(.,10) # top 10 de los tweets más retwitteados 
+
+
+FavTupamaros <- Tupamaros %>% 
+                filter(., isRetweet == FALSE) %>% 
+                arrange(., desc(favoriteCount)) %>% 
+                select(., c(screenName, favoriteCount)) %>% 
+                top_n(.,10)
+                
+                        
+FavAlternativos <- Alternativos %>% 
+                   filter(., isRetweet == FALSE) %>% 
+                   arrange(., desc(favoriteCount)) %>% 
+                   select(., c(screenName, favoriteCount)) %>% 
+                   top_n(.,10)
+
+
+```
+
+Salida en tabla
+```{r}
+
+# Unión
+TPop <- cbind(PopOficiales, PopTupamaros, PopAlternativos) 
+TFav <- cbind(FavOficiales, FavTupamaros, FavAlternativos)
+
+# Tabulación
+TPop %>% kbl(., caption = "Tweets más populares (por retweets)",
+         col.names = c("Oficiales", "Rt", "Tupamaros", "Rt", "Alternativos", "Rt"))%>%
+         kable_paper("hover", full_width = TRUE, html_font = "Cambria" ) %>% 
+         row_spec(row = 0 ,bold=T) %>% 
+         kable_styling(font_size = 14, position="left") %>% 
+         footnote("Fuente: Elaboración propia", general_title = "", fixed_small_size = T)
+
+
+TFav %>% kbl(., caption = "Tweets más populares (por favs)",
+         col.names = c("Oficiales", "Fv", "Tupamaros", "Fv", "Alternativos", "Fv"))%>%
+         kable_paper("hover", full_width = TRUE, html_font = "Cambria" ) %>% 
+         row_spec(row = 0 ,bold=T) %>% 
+         kable_styling(font_size = 14, position="left") %>% 
+         footnote("Fuente: Elaboración propia", general_title = "", fixed_small_size = T)
+
+
+```
+
+
+
+Gráficos
+```{r}
+
+pal <- wes_palette("BottleRocket2", 3, type = "discrete")
+vecPal <- cbind(c("Oficiales","Tupamaros","Alternativos"), c(pal[3],pal[2],pal[1]))
+
+
+# Agregado de índices por orden (diferenciar cuentas con más de un tweet)
+PopOficiales$screenName <- paste(1:10,PopOficiales$screenName)
+PopTupamaros$screenName <- paste(1:10,PopTupamaros$screenName)
+PopAlternativos$screenName <- paste(1:10,PopAlternativos$screenName)
+
+
+
+PopOFgraf <- ggplot(PopOficiales, aes(x=stats::reorder(x=screenName, X=retweetCount),
+                                      y=retweetCount)) + 
+                geom_col(fill = vecPal[1,2]) +
+                coord_flip() +
+                ggtitle("Oficiales") +
+                xlab("Nombre de la cuenta") + ylab("") +
+                theme_minimal()
+
+PopTPgraf <- ggplot(PopTupamaros, aes(x=stats::reorder(x=screenName, X=retweetCount),
+                                      y=retweetCount)) + 
+                geom_col(fill = vecPal[2,2]) +
+                coord_flip() +
+                ggtitle("Tupamaros") +
+                xlab("") + ylab("Cantidad de tweets") +
+                theme_minimal()
+
+PopALgraf <- ggplot(PopAlternativos, aes(x=stats::reorder(x=screenName, X=retweetCount),
+                                         y=retweetCount)) + 
+                geom_col(fill = vecPal[3,2]) +
+                coord_flip() +
+                ggtitle("Alternativos") +
+                xlab("") + ylab("") +
+                theme_minimal()
+
+PopOFgraf + PopTPgraf + PopALgraf
+
+```
+
+

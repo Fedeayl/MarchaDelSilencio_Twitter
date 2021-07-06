@@ -1,0 +1,165 @@
+---
+title: "MarchaTwitter"
+author: "Federico Acosta y Lara"
+date: "2/5/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r Carga Paquetes}
+library(rtweet)
+library(twitteR)
+library(stringr)
+library(wordcloud)
+library(RCurl)
+library(tm)
+library(ROAuth) 
+library(stringr) 
+library(stringi) 
+library(tm) 
+library(gsubfn) 
+library(httr) 
+library(igraph)
+
+library(gtable)
+library(foreign)
+
+library(ggplot2)
+
+
+```
+
+
+```{r Descargas, include=FALSE}
+
+
+```
+
+
+```{r Carga de datos}
+Tupamaros <- readRDS(here::here("Data", "Raw data", "Tupamaros.rds"))
+Tupamaros2 <- rio::import(here::here("Data", "Raw data", "TupamarosR.csv"))
+
+
+min(Tupamaros$created_at)
+max(Tupamaros$created_at)
+
+min(Tupamaros2$created)
+max(Tupamaros2$created)
+```
+
+
+
+## Análisis de datos - Término "Tupamaros"
+
+Para esto se restringe la base para tomar solamente aquellos tweets emitidos el día de la movilización virtual.
+
+```{r}
+Tupamaros <- as.data.frame(Tupamaros)
+Tupamaros <- Tupamaros[Tupamaros$created_at > "2020-05-20 00:00:00" & Tupamaros$created_at < "2020-05-21 00:00:00",]
+
+```
+
+
+Cantidad de tweets emitidos según cantidad de seguidores de la cuenta.
+```{r Tweets vs seguidores}
+p1 <- ggplot(Tupamaros) + 
+        geom_histogram (aes(x = followers_count)) + 
+        labs(title = "Tweets según cantidad de seguidores",subtitle = "Término: Tupamaros", 
+             caption = "Fuente: elaboración propia",
+             x = "Cantidad de seguidores",
+             y ="Tweets emitidos") +
+        xlim(0,2500)+
+        theme_minimal()
+
+
+png(filename = here::here("Figures", "Exploratory figures", "Tupamaros - Tweets según cantidad de seguidores de la cuenta.png"), width = 1200, height = 1200,  res = 200)
+p1
+dev.off()
+
+```
+
+
+Usuarios más activos twitteando con el término "Tupamaros".
+```{r Usuarios más activos}
+
+CountsTupamaros <- as.data.frame(sort(table(Tupamaros$screen_name), decreasing = TRUE))
+
+CT <- CountsTupamaros[1:10,]
+
+p2 <- ggplot(CT, aes(Var1, Freq)) + geom_bar(stat = "identity")+ 
+        labs(title = "Usuarios más activos twitteando con el término",
+             subtitle = "Término: Tupamaros",
+             caption = "Fuente: elaboración propia")+
+        xlab("Nombre de usuario")+
+        ylab("Cantidad de tweets")+
+        theme_minimal()+
+        theme(axis.text.x = element_text(angle = -20, vjust = 1, hjust = 0))
+
+png(filename = here::here("Figures", "Exploratory figures", "Tupamaros - Usuarios más activos.png"), width = 1200, height = 1200,  res = 200)
+p2
+dev.off()
+        
+```
+
+
+Tweet original con más retweets
+```{r Original rtw}
+
+PopTweet <- Tupamaros
+
+PopTweet <- PopTweet[PopTweet$is_retweet==FALSE,]
+PopTweet <- PopTweet[PopTweet$retweet_count == max(PopTweet$retweet_count),]
+PopTweet <- PopTweet[, c("screen_name", "retweet_count", "followers_count", "text")]
+
+PopTweet
+```
+
+
+Popularidad de las cuentas que twittearon con "Tupamaros", según la cantidad de seguidores que tenían en el momento
+```{r Cuenas populares}
+Popularidad <- Tupamaros
+Popularidad <- Popularidad[,c("screen_name", "followers_count")]
+Popularidad <- Popularidad[order(Popularidad$followers_count, decreasing=TRUE),]
+Popularidad <- Popularidad[!duplicated(Popularidad$screen_name), ]
+Popularidad <- Popularidad[1:20,]
+
+Popularidad
+```
+
+
+Tweets más populares, según cantidad de favoritos 
+```{r Tweet popular}
+
+Populares <- Tupamaros
+Populares <- Populares[,c("screen_name", "favorite_count", "text")]
+Populares <- Populares[order(Populares$favorite_count, decreasing=TRUE),]
+Populares <- Populares[1:5,]
+
+```
+
+Momento del día en que se twitteó 
+```{r Hora}
+TweetTime <- as.data.frame(Tupamaros)
+rtweet::ts_plot(TweetTime, by="hours") #Con los tweets del día
+
+# Considerando un intervalo temporal mayor
+Tupamaros2$created <- as.POSIXct(Tupamaros2$created) 
+rtweet::ts_plot(Tupamaros2, by="hours")+
+        theme_minimal() +
+        theme(plot.title = ggplot2::element_text(face = "bold")) +
+        labs( x = NULL, y = "Cantidad de tweets emitidos/hora",
+    title = "Frecuencia de tweets con la palabra 'tupamaros'",
+    subtitle = "emitidos entre el 14 y el 22 de mayo",
+    caption = "\nFuente: Elaboración propia"
+  )
+
+```
+
+

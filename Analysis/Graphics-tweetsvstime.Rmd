@@ -1,0 +1,125 @@
+---
+title: "Marcha virtual"
+author: "Federico Acosta y Lara"
+date: "2/6/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Importar data
+```{r importar data}
+
+#Librerias necesarias
+library(ggplot2)
+library(dplyr)
+library(wesanderson) #Paleta de colores
+library(patchwork) #Para ploteo conjunto
+
+#Bases de datos
+Oficiales <- rio::import(here::here("Data", "Raw data", "hashtagoficiales.csv"))
+Alternativos <- rio::import(here::here("Data", "Raw data", "AlternativosR.csv"))
+Tupamaros <- rio::import(here::here("Data", "Raw data", "TupamarosR.csv"))
+
+```
+
+
+Gráficos por separado
+```{r}
+
+#Convertir variable de fecha de emisión del tweet en tipo POSIXct
+Oficiales$created <- as.POSIXct(Oficiales$created) 
+Alternativos$created <- as.POSIXct(Alternativos$created) 
+Tupamaros$created <- as.POSIXct(Tupamaros$created)
+
+#Gráfico de frecuencia, tweets con hashtags oficiales
+Ofi <- rtweet::ts_plot(Oficiales, by="hours", color="darkred")+
+        theme_minimal() +
+        theme(plot.title = ggplot2::element_text(face = "bold")) +
+        labs( x = NULL, y = NULL,
+              title = "Frecuencia de tweets con hashtags oficiales'",
+              subtitle = "emitidos entre el 14 y el 22 de mayo",
+              caption = "\nFuente: Elaboración propia")
+
+#Gráfico de frecuencia, tweets con términos alternativos
+Alt <- rtweet::ts_plot(Alternativos, by="hours", color="darkblue")+
+        theme_minimal() +
+        theme(plot.title = ggplot2::element_text(face = "bold")) +
+        labs( x = NULL, y = "Cantidad de tweets emitidos/hora",
+              title = "Frecuencia de tweets con términos alternativos'",
+              subtitle = "emitidos entre el 14 y el 22 de mayo",
+              caption = "\nFuente: Elaboración propia")
+
+#Gráfico de frecuencia de tweets sobre tupamaros
+Tup <- rtweet::ts_plot(Tupamaros, by="hours", color="darkgreen")+
+        theme_minimal() +
+        theme(plot.title = ggplot2::element_text(face = "bold")) +
+        labs( x = NULL, y = NULL,
+              title = "Frecuencia de tweets con la palabra 'Tupamaros'",
+              subtitle = "emitidos entre el 14 y el 22 de mayo",
+              caption = "\nFuente: Elaboración propia")
+
+
+#Ploteo de los tres gráficos en un panel
+Ofi / Alt /Tup
+
+```
+
+
+
+Gráficación en simultáneo
+```{r}
+# Conversión de variable a tipo POSIXct
+Oficiales$created <- as.POSIXct(Oficiales$created) 
+Alternativos$created <- as.POSIXct(Alternativos$created)
+Tupamaros$created <- as.POSIXct(Tupamaros$created)
+
+# Agregar categoría de referencia, para poder graficar lineas separadas
+Oficiales$Referencia <- "Oficiales"
+Tupamaros$Referencia <-  "Tupamaros"
+Alternativos$Referencia <- "Alternativos"
+
+# Unir las tres bases en una
+Todos <- rbind.data.frame(Oficiales, Tupamaros, Alternativos)
+
+Todos$Referencia <- factor(Todos$Referencia, levels=c("Oficiales", "Tupamaros", "Alternativos"))
+
+# Graficación
+Tod <- Todos %>% 
+  dplyr::group_by(Referencia) %>%
+  rtweet::ts_plot(., by="hours") +
+  theme_minimal() +
+  theme(plot.title = ggplot2::element_text(face = "bold")) +
+        labs( x = "Fecha", y = "Tweets/hora",
+              title = "Frecuencia de tweets",
+              subtitle = "Emitidos entre el 14 y el 22 de mayo",
+              caption = "\nFuente: Elaboración propia")
+  
+
+# Asignación de colores
+pal <- wes_palette("BottleRocket2", 3, type = "discrete")
+wes_palette("BottleRocket2")
+
+# Ploteo
+Tod <- Tod + scale_colour_manual(breaks=c("Oficiales","Tupamaros","Alternativos"),
+                                 values=c(pal[3],pal[2],pal[1]))
+
+
+jpeg(filename = "Figures/Final Figures/FrecuenciaTweets.jpg", 
+     width = 3200, height = 1800, res = 300)
+
+Tod
+
+dev.off()
+
+
+```
+
+
+
+
