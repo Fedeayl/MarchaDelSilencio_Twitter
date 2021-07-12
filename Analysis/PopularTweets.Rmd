@@ -27,7 +27,6 @@ Oficiales <- rio::import(here::here("Data", "Raw data", "hashtagoficiales.csv"))
 Alternativos <- rio::import(here::here("Data", "Raw data", "AlternativosR.csv"))
 Tupamaros <- rio::import(here::here("Data", "Raw data", "TupamarosR.csv"))
 
-
 ```
 
 
@@ -110,14 +109,15 @@ TFav %>% kbl(., caption = "Tweets más populares (por favs)",
 ```
 
 
-
-Gráficos
+Paleta de colores para los gráficos
 ```{r}
-
-pal <- wes_palette("BottleRocket2", 3, type = "discrete")
+pal <- wesanderson::wes_palette("BottleRocket2", 3, type = "discrete")
 vecPal <- cbind(c("Oficiales","Tupamaros","Alternativos"), c(pal[3],pal[2],pal[1]))
+```
 
 
+Gráficos Populares Retweets
+```{r}
 # Agregado de índices por orden (diferenciar cuentas con más de un tweet)
 PopOficiales$screenName <- paste(1:10,PopOficiales$screenName)
 PopTupamaros$screenName <- paste(1:10,PopTupamaros$screenName)
@@ -138,7 +138,7 @@ PopTPgraf <- ggplot(PopTupamaros, aes(x=stats::reorder(x=screenName, X=retweetCo
                 geom_col(fill = vecPal[2,2]) +
                 coord_flip() +
                 ggtitle("Tupamaros") +
-                xlab("") + ylab("Cantidad de tweets") +
+                xlab("") + ylab("Cantidad de retweets") +
                 theme_minimal()
 
 PopALgraf <- ggplot(PopAlternativos, aes(x=stats::reorder(x=screenName, X=retweetCount),
@@ -149,7 +149,60 @@ PopALgraf <- ggplot(PopAlternativos, aes(x=stats::reorder(x=screenName, X=retwee
                 xlab("") + ylab("") +
                 theme_minimal()
 
+jpeg(filename = "Figures/Final figures/CuentasPopularesRT.jpg", 
+     width = 3200, height = 1800, res = 300)
+
 PopOFgraf + PopTPgraf + PopALgraf
+
+dev.off()
+```
+
+
+Gráficos Populares Likes
+
+```{r}
+
+# Agregado de índices por orden (diferenciar cuentas con más de un tw en el ranking)
+FavOficiales$screenName <- paste(1:10,FavOficiales$screenName)
+FavTupamaros$screenName <- paste(1:10,FavTupamaros$screenName)
+FavAlternativos$screenName <- paste(1:10,FavAlternativos$screenName)
+
+
+
+FavOFgraf <- ggplot(FavOficiales, aes(x=stats::reorder(x=screenName, X=favoriteCount),
+                                      y=favoriteCount)) + 
+                geom_col(fill = vecPal[1,2]) +
+                coord_flip() +
+                ggtitle("Oficiales") +
+                xlab("Nombre de la cuenta") + ylab("") +
+                theme_minimal()
+
+FavTPgraf <- ggplot(FavTupamaros, aes(x=stats::reorder(x=screenName, X=favoriteCount),
+                                      y=favoriteCount)) + 
+                geom_col(fill = vecPal[2,2]) +
+                coord_flip() +
+                ggtitle("Tupamaros") +
+                xlab("") + ylab("Cantidad de likes") +
+                theme_minimal()
+
+FavALgraf <- ggplot(FavAlternativos, aes(x=stats::reorder(x=screenName, X=favoriteCount),
+                                         y=favoriteCount)) + 
+                geom_col(fill = vecPal[3,2]) +
+                coord_flip() +
+                ggtitle("Alternativos") +
+                xlab("") + ylab("") +
+                theme_minimal()
+
+
+
+jpeg(filename = "Figures/Final figures/CuentasPopularesFV.jpg", 
+     width = 3200, height = 1800, res = 300)
+
+FavOFgraf + FavTPgraf + FavALgraf
+
+dev.off()
+
+
 
 ```
 

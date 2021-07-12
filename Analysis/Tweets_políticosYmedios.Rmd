@@ -1,0 +1,204 @@
+---
+title: "CuentasPolíticos"
+author: "Federico Acosta y Lara"
+date: "7/11/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Librerias
+```{r}
+library(dplyr)
+library(stopwords)
+library(kableExtra)
+library(ggplot2)
+library(patchwork)
+```
+
+Importación de datos
+```{r}
+Oficiales <- rio::import(here::here("Data", "Raw data", "hashtagoficiales.csv"))
+Cuentas <- rio::import(here::here("Data", "Funcionarios_cuentas.csv"))
+
+```
+
+
+Conteo de tweets por partido y cargo
+```{r}
+Conteo <- Oficiales %>%
+        select(screenName) %>% 
+        inner_join(Cuentas, by=c("screenName" = "Cuenta")) %>% 
+        group_by(Cargo, Partido) %>% 
+        count(Partido)
+
+```
+
+Armado de tablas
+```{r}
+Diputados <- as.data.frame(Conteo[Conteo$Cargo=="Diputado",])
+Diputados <- rbind(Diputados, c("Diputado", "CA", "0"), c("Diputado", "Otro", "0"))
+Diputados$Partido <- factor(Diputados$Partido, levels = c("FA", "PN", "PC", "CA", "Otro"))
+Diputados$n <- as.numeric(Diputados$n)
+
+
+Senadores <- as.data.frame(Conteo[Conteo$Cargo=="Senador",])
+Senadores <- rbind(Senadores, c("Senador", "PC", "0"), c("Senador", "CA", "0"))
+Senadores$Partido <- factor(Senadores$Partido, levels = c("FA", "PN", "PC", "CA"))
+Senadores$n <- as.numeric(Senadores$n)
+
+
+Ministros <- as.data.frame(Conteo[Conteo$Cargo=="Ministro",])
+Ministros <- rbind(Ministros, c("Ministro", "CA", "0"))
+Ministros$Partido <- factor(Ministros$Partido, levels = c("PN", "PC", "CA","PI"))
+Ministros$n <- as.numeric(Ministros$n)
+
+```
+
+
+Gráficos - Funcionarios
+
+```{r}
+
+DipGraf <- ggplot(Diputados, aes(x=Partido, y=n)) + 
+                geom_col(fill = c("chocolate1", "brown2", 
+                                  "cornflowerblue", "darkgoldenrod1", "darkgray")) +
+                ggtitle("Diputados") +
+                xlab("Partido") + ylab("") +
+                ylim(0,300) +
+                geom_text(aes(label = n), size = 4, hjust = 0, vjust = 0) +
+                theme_minimal()
+
+SenGraf <- ggplot(Senadores, aes(x=Partido, y=n)) + 
+                geom_col(fill = c("chocolate1", "cornflowerblue", 
+                                  "brown2", "darkgoldenrod1")) +
+                ggtitle("Senadores") +
+                xlab("Partido") + ylab("") +
+                ylim(0,40) +
+                geom_text(aes(label = n), size = 4, hjust = 0, vjust = 0) +
+                theme_minimal()
+
+MinGraf <- ggplot(Ministros, aes(x=Partido, y=n)) + 
+                geom_col(fill = c("brown2", "darkmagenta", 
+                                  "cornflowerblue", "darkgoldenrod1")) +
+                ggtitle("Ministros") +
+                xlab("Partido") + ylab("") +
+                ylim(0,8) +
+                geom_text(aes(label = n), size = 4, hjust = 0, vjust = 0) +
+                theme_minimal()
+
+
+
+jpeg(filename = "Figures/Final figures/TweetsFuncionarios.jpg", 
+     width = 3200, height = 1800, res = 300)
+
+DipGraf + (SenGraf / MinGraf)
+
+dev.off()
+```
+
+Partidos políticos (Cuentas institucionales)
+```{r}
+C_Institucionales <- as.data.frame(rbind(FA="Frente_Amplio", PN="PNACIONAL", PC="PartidoColorado", CA="Cabildo_UY", PI="pindependiente", PG="lagenteuy", PE="pEcologistaUy"))
+names(C_Institucionales) <- c("Cuenta")
+
+ConteoP <- Oficiales %>%
+        select(screenName) %>% 
+        inner_join(C_Institucionales, by=c("screenName" = "Cuenta")) %>%
+        count(screenName)
+
+Partidos <- as.data.frame(ConteoP)
+Partidos <- rbind(Partidos, c("Cabildo_UY", "0"), c("lagenteuy", "0"), c("pEcologistaUy", "0"))
+names(Partidos) <- c("Cuenta", "n")
+Partidos$Cuenta <- factor(Partidos$Cuenta, levels = c("Frente_Amplio", "PNACIONAL", "PartidoColorado", "Cabildo_UY", "pindependiente", "lagenteuy", "pEcologistaUy"))
+Partidos$n <- as.numeric(Partidos$n)
+
+```
+
+Gráficos - Partidos políticos
+```{r}
+PartGraf <- ggplot(Partidos, aes(x=Cuenta, y=n)) + 
+                geom_col(fill = c("chocolate1", "brown2", 
+                                  "darkmagenta", "cornflowerblue", "azure4", "azure4", "azure4")) +
+                ggtitle("Cuentas institucionales") +
+                xlab("") + ylab("") +
+                ylim(0,40) +
+                geom_text(aes(label = n), size = 4, hjust = 0, vjust = 0) +
+                theme_minimal()
+
+jpeg(filename = "Figures/Final figures/TweetsPartidos.jpg", 
+     width = 3200, height = 1800, res = 300)
+
+PartGraf
+
+dev.off()
+```
+
+
+Medios de comunicación
+
+```{r}
+#Prensa escrita
+PrensaE <- c("elpaisuy", "ObservadorUY", "ladiaria", "larepublica_uy", "BUSQUEDAonline")
+PrensaE <- as.data.frame(PrensaE)
+names(PrensaE) <- "Cuenta"
+
+ConteoE <- Oficiales %>%
+        select(screenName) %>% 
+        inner_join(PrensaE, by=c("screenName" = "Cuenta")) %>%
+        count(screenName)
+
+PrensaE <- rbind(ConteoE, c("ObservadorUY", 0), c("BUSQUEDAonline", 0))
+PrensaE$n <- as.numeric(PrensaE$n)
+# Informativos televisivos
+Informativos <- c("TelemundoUY", "Subrayado", "TelenocheUy", "InfoTNU", "infocapitaluy")
+Informativos <- as.data.frame(Informativos)
+names(Informativos) <- "Cuenta"
+
+ConteoI <- Oficiales %>%
+        select(screenName) %>% 
+        inner_join(Informativos, by=c("screenName" = "Cuenta")) %>%
+        count(screenName)
+
+Informativos <- rbind(ConteoI, c("Subrayado", 0), c("TelenocheUy", 0), c("InfoTNU", 0))
+Informativos$n <- as.numeric(Informativos$n)
+```
+
+
+Ploteo - Medios de comunicación
+
+```{r}
+MediosGrafPE <- ggplot(PrensaE, aes(stats::reorder(x=screenName, X=-n), y=n)) + 
+                geom_col(fill = c(wesanderson::wes_palette("BottleRocket2", type = "discrete"))) +
+                ggtitle("Prensa escrita") +
+                xlab("") + ylab("") +
+                ylim(0,40) +
+                geom_text(aes(label = n), size = 4, hjust = 0, vjust = 0) +
+                theme_minimal()
+
+MediosGrafTV <- ggplot(Informativos, aes(stats::reorder(x=screenName, X=-n), y=n)) + 
+                geom_col(fill = c(wesanderson::wes_palette("BottleRocket2", type = "discrete"))) +
+                ggtitle("Informativos - TV") +
+                xlab("") + ylab("") +
+                ylim(0,8) +
+                geom_text(aes(label = n), size = 4, hjust = 0, vjust = 0) +
+                theme_minimal()
+
+
+jpeg(filename = "Figures/Final figures/TweetsMedios.jpg", 
+     width = 3200, height = 1800, res = 300)
+
+MediosGrafPE / MediosGrafTV
+
+dev.off()
+
+```
+
+
+
+
+

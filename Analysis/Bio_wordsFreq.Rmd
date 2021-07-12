@@ -1,0 +1,172 @@
+---
+title: "Bio_analysis"
+author: "Federico Acosta y Lara"
+date: "7/10/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(stopwords)
+library(kableExtra)
+library(ggplot2)
+library(patchwork)
+```
+
+Importar bases 
+```{r}
+
+Oficiales <- rio::import(here::here("Data", "Raw data", "HOF.csv"))
+Tupamaros <- rio::import(here::here("Data", "Raw data", "tupasR.csv"))
+Alternativos <- rio::import(here::here("Data", "Raw data", "Altern.csv"))
+```
+
+Función de tokenización y limpieza
+```{r}
+limpiar_tokenizar <- function(texto){
+  # El orden de la limpieza no es arbitrario
+    # Se convierte todo el texto a minúsculas
+    nuevo_texto <- tolower(texto)
+    # Eliminación de páginas web (palabras que empiezan por "http." seguidas 
+    # de cualquier cosa que no sea un espacio)
+    nuevo_texto <- stringr::str_replace_all(nuevo_texto,"http\\S*", "")
+    # Eliminación de signos de puntuación
+    nuevo_texto <- stringr::str_replace_all(nuevo_texto,"[[:punct:]]", " ")
+    # Eliminación de números
+    nuevo_texto <- stringr::str_replace_all(nuevo_texto,"[[:digit:]]", " ")
+    # Eliminación de espacios en blanco múltiples
+    nuevo_texto <- stringr::str_replace_all(nuevo_texto,"[\\s]+", " ")
+    # Tokenización por palabras individuales
+    nuevo_texto <- stringr::str_split(nuevo_texto, " ")[[1]]
+    # Eliminación de tokens con una longitud < 2
+    nuevo_texto <- purrr::keep(.x = nuevo_texto, .p = function(x){stringr::str_length(x) > 1})
+    return(nuevo_texto)
+}
+```
+
+
+Descripciones #Oficiales
+```{r}
+Bio_Oficiales <- Oficiales
+Bio_Oficiales <- Bio_Oficiales$description #Se queda solo con las descripciones
+Bio_Oficiales <- lapply(Bio_Oficiales,limpiar_tokenizar) #Aplica a la lista la función de toquenización
+Bio_Oficiales <- unlist(Bio_Oficiales)
+
+# Eliminación de stopwords
+stpwrd <- c(stopwords::stopwords("es"), "si", "ser", "\U0001f1fa\U0001f1fe")  #Stopwords
+Bio_Oficiales <- Bio_Oficiales[Bio_Oficiales %in% stpwrd == FALSE]
+
+# Determinar la frecuencia de las palabras
+FreqOfi <- table(Bio_Oficiales) # Tabla de frecuencia
+FreqOfi <- sort(FreqOfi, decreasing = TRUE) # Ordenamiento
+FreqOfi <- FreqOfi[1:20] # Los 20 primeros términos
+FreqOfi <- data.frame(FreqOfi)
+```
+
+
+
+Descripciones "Tupamaros"
+```{r}
+
+Bio_Tupamaros <- Tupamaros
+Bio_Tupamaros <- Bio_Tupamaros$description #Se queda solo con las descripciones
+Bio_Tupamaros <- lapply(Bio_Tupamaros,limpiar_tokenizar) #Aplica a la lista la función de toquenización
+Bio_Tupamaros <- unlist(Bio_Tupamaros)
+
+# Eliminación de stopwords
+stpwrd <- c(stopwords::stopwords("es"), "si", "ser", "\U0001f1fa\U0001f1fe")  #Stopwords
+Bio_Tupamaros <- Bio_Tupamaros[Bio_Tupamaros %in% stpwrd == FALSE]
+
+# Determinar la frecuencia de las palabras
+FreqTup <- table(Bio_Tupamaros) # Tabla de frecuencia
+FreqTup <- sort(FreqTup, decreasing = TRUE) # Ordenamiento
+FreqTup <- FreqTup[1:20] # Los 20 primeros términos
+FreqTup <- data.frame(FreqTup)
+```
+
+
+Descripciones "Alternativos"
+```{r}
+Bio_Alternativos <- Alternativos
+Bio_Alternativos <- Bio_Alternativos$description #Se queda solo con las descripciones
+Bio_Alternativos <- lapply(Bio_Alternativos,limpiar_tokenizar) #Aplica a la lista la función de toquenización
+Bio_Alternativos <- unlist(Bio_Alternativos)
+
+# Eliminación de stopwords
+stpwrd <- c(stopwords::stopwords("es"), "si", "ser", "\U0001f1fa\U0001f1fe") #Stopwords
+Bio_Alternativos <- Bio_Alternativos[Bio_Alternativos %in% stpwrd == FALSE]
+
+# Determinar la frecuencia de las palabras
+FreqAlt <- table(Bio_Alternativos) # Tabla de frecuencia
+FreqAlt <- sort(FreqAlt, decreasing = TRUE) # Ordenamiento
+FreqAlt <- FreqAlt[1:20] # Los 20 primeros términos
+FreqAlt <- data.frame(FreqAlt)
+```
+
+Tablas
+```{r}
+TBio <- cbind(FreqOfi, FreqTup, FreqAlt)
+
+TBio %>% kbl(., caption = "Autodescripción de los twiteros",
+         col.names = c("Oficiales", "Fq", "Tupamaros", "Fq", "Alternativos", "Fq"))%>%
+         kable_paper("hover", full_width = TRUE, html_font = "Cambria" ) %>% 
+         row_spec(row = 0 ,bold=T) %>% 
+         kable_styling(font_size = 14, position="left") %>% 
+         footnote("Fuente: Elaboración propia", general_title = "", fixed_small_size = T)
+
+```
+
+
+Gráficos
+
+
+Paleta de colores para los gráficos
+```{r}
+pal <- wesanderson::wes_palette("BottleRocket2", 3, type = "discrete")
+vecPal <- cbind(c("Oficiales","Tupamaros","Alternativos"), c(pal[3],pal[2],pal[1]))
+```
+
+Ploteo
+```{r}
+
+FreqOFgraf <- ggplot(FreqOfi, aes(x=stats::reorder(x=Bio_Oficiales, X=Freq),
+                                      y=Freq)) + 
+                geom_col(fill = vecPal[1,2]) +
+                coord_flip() +
+                ggtitle("Oficiales") +
+                xlab("Término") + ylab("") +
+                theme_minimal()
+
+FreqTPgraf <- ggplot(FreqTup, aes(x=stats::reorder(x=Bio_Tupamaros, X=Freq),
+                                      y=Freq)) + 
+                geom_col(fill = vecPal[2,2]) +
+                coord_flip() +
+                ggtitle("Tupamaros") +
+                xlab("") + ylab("Frecuencia") +
+                theme_minimal()
+
+FreqALgraf <- ggplot(FreqAlt, aes(x=stats::reorder(x=Bio_Alternativos, X=Freq),
+                                         y=Freq)) + 
+                geom_col(fill = vecPal[3,2]) +
+                coord_flip() +
+                ggtitle("Alternativos") +
+                xlab("") + ylab("") +
+                theme_minimal()
+
+
+
+jpeg(filename = "Figures/Exploratory figures/DescripcionesBios.jpg", 
+     width = 3200, height = 1800, res = 300)
+
+FreqOFgraf + FreqTPgraf + FreqALgraf
+
+dev.off()
+
+```
+
