@@ -2,8 +2,10 @@
 title: "Bio_analysis"
 author: "Federico Acosta y Lara"
 date: "7/10/2021"
-output: html_document
-editor_options: 
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
   chunk_output_type: console
 ---
 
@@ -118,7 +120,7 @@ TBio %>% kbl(., caption = "Autodescripción de los twiteros",
          kable_paper("hover", full_width = TRUE, html_font = "Cambria" ) %>% 
          row_spec(row = 0 ,bold=T) %>% 
          kable_styling(font_size = 14, position="left") %>% 
-         footnote("Fuente: Elaboración propia", general_title = "", fixed_small_size = T)
+         footnote("Fuente: Elaboración propia", general_title = "", fixed_small_size = T) 
 
 ```
 
@@ -135,33 +137,33 @@ vecPal <- cbind(c("Oficiales","Tupamaros","Alternativos"), c(pal[3],pal[2],pal[1
 Ploteo
 ```{r}
 
-FreqOFgraf <- ggplot(FreqOfi, aes(x=stats::reorder(x=Bio_Oficiales, X=Freq),
-                                      y=Freq)) + 
+FreqOFgraf <- ggplot(FreqOfi, aes(x=stats::reorder(x=Bio_Oficiales, X=Freq), y=Freq)) + 
                 geom_col(fill = vecPal[1,2]) +
                 coord_flip() +
                 ggtitle("Oficiales") +
-                xlab("Término") + ylab("") +
-                theme_minimal()
+                xlab("Palabra") + ylab("") +
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
-FreqTPgraf <- ggplot(FreqTup, aes(x=stats::reorder(x=Bio_Tupamaros, X=Freq),
-                                      y=Freq)) + 
+FreqTPgraf <- ggplot(FreqTup, aes(x=stats::reorder(x=Bio_Tupamaros, X=Freq), y=Freq)) + 
                 geom_col(fill = vecPal[2,2]) +
                 coord_flip() +
                 ggtitle("Tupamaros") +
                 xlab("") + ylab("Frecuencia") +
-                theme_minimal()
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
-FreqALgraf <- ggplot(FreqAlt, aes(x=stats::reorder(x=Bio_Alternativos, X=Freq),
-                                         y=Freq)) + 
+FreqALgraf <- ggplot(FreqAlt, aes(x=stats::reorder(x=Bio_Alternativos, X=Freq), y=Freq)) + 
                 geom_col(fill = vecPal[3,2]) +
                 coord_flip() +
                 ggtitle("Alternativos") +
                 xlab("") + ylab("") +
-                theme_minimal()
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 
 
-jpeg(filename = "Figures/Exploratory figures/DescripcionesBios.jpg", 
+jpeg(filename = "Figures/Final figures/DescripcionesBios.jpg", 
      width = 3200, height = 1800, res = 300)
 
 FreqOFgraf + FreqTPgraf + FreqALgraf

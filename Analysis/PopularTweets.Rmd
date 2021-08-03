@@ -131,7 +131,8 @@ PopOFgraf <- ggplot(PopOficiales, aes(x=stats::reorder(x=screenName, X=retweetCo
                 coord_flip() +
                 ggtitle("Oficiales") +
                 xlab("Nombre de la cuenta") + ylab("") +
-                theme_minimal()
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 PopTPgraf <- ggplot(PopTupamaros, aes(x=stats::reorder(x=screenName, X=retweetCount),
                                       y=retweetCount)) + 
@@ -139,7 +140,8 @@ PopTPgraf <- ggplot(PopTupamaros, aes(x=stats::reorder(x=screenName, X=retweetCo
                 coord_flip() +
                 ggtitle("Tupamaros") +
                 xlab("") + ylab("Cantidad de retweets") +
-                theme_minimal()
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 PopALgraf <- ggplot(PopAlternativos, aes(x=stats::reorder(x=screenName, X=retweetCount),
                                          y=retweetCount)) + 
@@ -147,7 +149,8 @@ PopALgraf <- ggplot(PopAlternativos, aes(x=stats::reorder(x=screenName, X=retwee
                 coord_flip() +
                 ggtitle("Alternativos") +
                 xlab("") + ylab("") +
-                theme_minimal()
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 jpeg(filename = "Figures/Final figures/CuentasPopularesRT.jpg", 
      width = 3200, height = 1800, res = 300)
@@ -175,7 +178,8 @@ FavOFgraf <- ggplot(FavOficiales, aes(x=stats::reorder(x=screenName, X=favoriteC
                 coord_flip() +
                 ggtitle("Oficiales") +
                 xlab("Nombre de la cuenta") + ylab("") +
-                theme_minimal()
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 FavTPgraf <- ggplot(FavTupamaros, aes(x=stats::reorder(x=screenName, X=favoriteCount),
                                       y=favoriteCount)) + 
@@ -183,7 +187,8 @@ FavTPgraf <- ggplot(FavTupamaros, aes(x=stats::reorder(x=screenName, X=favoriteC
                 coord_flip() +
                 ggtitle("Tupamaros") +
                 xlab("") + ylab("Cantidad de likes") +
-                theme_minimal()
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 FavALgraf <- ggplot(FavAlternativos, aes(x=stats::reorder(x=screenName, X=favoriteCount),
                                          y=favoriteCount)) + 
@@ -191,7 +196,8 @@ FavALgraf <- ggplot(FavAlternativos, aes(x=stats::reorder(x=screenName, X=favori
                 coord_flip() +
                 ggtitle("Alternativos") +
                 xlab("") + ylab("") +
-                theme_minimal()
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 
 

@@ -31,7 +31,6 @@ Tupamaros <- rio::import(here::here("Data", "Raw data", "TupamarosR.csv"))
 
 Gráficos por separado
 ```{r}
-
 #Convertir variable de fecha de emisión del tweet en tipo POSIXct
 Oficiales$created <- as.POSIXct(Oficiales$created) 
 Alternativos$created <- as.POSIXct(Alternativos$created) 
@@ -44,7 +43,8 @@ Ofi <- rtweet::ts_plot(Oficiales, by="hours", color="darkred")+
         labs( x = NULL, y = NULL,
               title = "Frecuencia de tweets con hashtags oficiales'",
               subtitle = "emitidos entre el 14 y el 22 de mayo",
-              caption = "\nFuente: Elaboración propia")
+              caption = "\nFuente: Elaboración propia") +
+        theme(text=element_text(size=12, family="Times"))
 
 #Gráfico de frecuencia, tweets con términos alternativos
 Alt <- rtweet::ts_plot(Alternativos, by="hours", color="darkblue")+
@@ -53,7 +53,8 @@ Alt <- rtweet::ts_plot(Alternativos, by="hours", color="darkblue")+
         labs( x = NULL, y = "Cantidad de tweets emitidos/hora",
               title = "Frecuencia de tweets con términos alternativos'",
               subtitle = "emitidos entre el 14 y el 22 de mayo",
-              caption = "\nFuente: Elaboración propia")
+              caption = "\nFuente: Elaboración propia") +
+        theme(text=element_text(size=12, family="Times"))
 
 #Gráfico de frecuencia de tweets sobre tupamaros
 Tup <- rtweet::ts_plot(Tupamaros, by="hours", color="darkgreen")+
@@ -62,7 +63,8 @@ Tup <- rtweet::ts_plot(Tupamaros, by="hours", color="darkgreen")+
         labs( x = NULL, y = NULL,
               title = "Frecuencia de tweets con la palabra 'Tupamaros'",
               subtitle = "emitidos entre el 14 y el 22 de mayo",
-              caption = "\nFuente: Elaboración propia")
+              caption = "\nFuente: Elaboración propia") +
+        theme(text=element_text(size=12, family="Times"))
 
 
 #Ploteo de los tres gráficos en un panel
@@ -98,12 +100,12 @@ Tod <- Todos %>%
         labs( x = "Fecha", y = "Tweets/hora",
               title = "Frecuencia de tweets",
               subtitle = "Emitidos entre el 14 y el 22 de mayo",
-              caption = "\nFuente: Elaboración propia")
+              caption = "\nFuente: Elaboración propia") +
+  theme(text=element_text(size=12, family="Times"))
   
 
 # Asignación de colores
-pal <- wes_palette("BottleRocket2", 3, type = "discrete")
-wes_palette("BottleRocket2")
+pal <- wesanderson::wes_palette("BottleRocket2", 3, type = "discrete")
 
 # Ploteo
 Tod <- Tod + scale_colour_manual(breaks=c("Oficiales","Tupamaros","Alternativos"),

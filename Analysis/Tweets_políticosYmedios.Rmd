@@ -2,8 +2,10 @@
 title: "CuentasPolíticos"
 author: "Federico Acosta y Lara"
 date: "7/11/2021"
-output: html_document
-editor_options: 
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
   chunk_output_type: console
 ---
 
@@ -35,7 +37,6 @@ Conteo <- Oficiales %>%
         inner_join(Cuentas, by=c("screenName" = "Cuenta")) %>% 
         group_by(Cargo, Partido) %>% 
         count(Partido)
-
 ```
 
 Armado de tablas
@@ -62,7 +63,7 @@ Ministros$n <- as.numeric(Ministros$n)
 
 Gráficos - Funcionarios
 
-```{r}
+```{r, include=FALSE}
 
 DipGraf <- ggplot(Diputados, aes(x=Partido, y=n)) + 
                 geom_col(fill = c("chocolate1", "brown2", 
@@ -127,8 +128,9 @@ PartGraf <- ggplot(Partidos, aes(x=Cuenta, y=n)) +
                 ggtitle("Cuentas institucionales") +
                 xlab("") + ylab("") +
                 ylim(0,40) +
-                geom_text(aes(label = n), size = 4, hjust = 0, vjust = 0) +
-                theme_minimal()
+                geom_text(aes(label = n), size = 4, hjust = 0.5, vjust = 0.5, family="Times") +
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 jpeg(filename = "Figures/Final figures/TweetsPartidos.jpg", 
      width = 3200, height = 1800, res = 300)
@@ -171,22 +173,24 @@ Informativos$n <- as.numeric(Informativos$n)
 
 Ploteo - Medios de comunicación
 
-```{r}
+```{r, include=FALSE}
 MediosGrafPE <- ggplot(PrensaE, aes(stats::reorder(x=screenName, X=-n), y=n)) + 
                 geom_col(fill = c(wesanderson::wes_palette("BottleRocket2", type = "discrete"))) +
                 ggtitle("Prensa escrita") +
                 xlab("") + ylab("") +
                 ylim(0,40) +
-                geom_text(aes(label = n), size = 4, hjust = 0, vjust = 0) +
-                theme_minimal()
+                geom_text(aes(label = n), size = 4, hjust = 0.5, vjust = 0.5, family="Times") +
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 MediosGrafTV <- ggplot(Informativos, aes(stats::reorder(x=screenName, X=-n), y=n)) + 
                 geom_col(fill = c(wesanderson::wes_palette("BottleRocket2", type = "discrete"))) +
                 ggtitle("Informativos - TV") +
                 xlab("") + ylab("") +
                 ylim(0,8) +
-                geom_text(aes(label = n), size = 4, hjust = 0, vjust = 0) +
-                theme_minimal()
+                geom_text(aes(label = n), size = 4, hjust = 0.5, vjust = 0.5, family="Times") +
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
 
 
 jpeg(filename = "Figures/Final figures/TweetsMedios.jpg", 
@@ -200,5 +204,111 @@ dev.off()
 
 
 
+
+
+Funcionarios - Porcentuales 
+
+```{r, include=FALSE}
+Conteo2 <- Oficiales %>%
+        select(screenName) %>% 
+        inner_join(Cuentas, by=c("screenName" = "Cuenta")) %>% 
+        group_by(Cargo, Partido, Nombre) %>% 
+        distinct()
+Conteo2 <- as.data.frame(Conteo2)
+Conteo2 <- Conteo2 %>% count(Cargo, Partido)
+
+
+DiputadosConf <- cbind(c("FA", "PN", "PC", "CA", "PI", "PG", "PE"), c(39, 29, 12, 9, 1, 1, 1))
+DiputadosConf <-as.data.frame(DiputadosConf)
+names(DiputadosConf) <- c("Partido", "n")
+DiputadosConf$n <- as.numeric(as.character(DiputadosConf$n))
+
+
+SenadoresConf <- cbind(c("FA", "PN", "PC", "CA"), as.numeric(c(8, 9, 4, 2)))
+SenadoresConf <-as.data.frame(SenadoresConf)
+names(SenadoresConf) <- c("Partido", "n")
+SenadoresConf$n <- as.numeric(as.character(SenadoresConf$n))
+
+
+MinistrosConf <- cbind(c("PN", "PC", "CA", "PI"), as.numeric(c(7, 3, 2, 1)))
+MinistrosConf <-as.data.frame(MinistrosConf)
+names(MinistrosConf) <- c("Partido", "n")
+MinistrosConf$n <- as.numeric(as.character(MinistrosConf$n))
+
+
+
+ConteoD <- Conteo2[Conteo2$Cargo=="Diputado",]
+ConteoS <- Conteo2[Conteo2$Cargo=="Senador",]
+ConteoM <- Conteo2[Conteo2$Cargo=="Ministro",]
+
+Dip <- DiputadosConf %>% left_join(ConteoD, by=c("Partido")) %>% 
+            select(Partido, n.x, n.y) %>%
+            replace(is.na(.), 0) %>% 
+            mutate(prop=round(100*(n.y/n.x),0))
+
+Dip$Partido <- factor(Dip$Partido, levels = c("FA", "PN", "PC", "CA","PI", "PG", "PE"))
+
+
+Sen <- SenadoresConf %>% left_join(ConteoS, by=c("Partido")) %>% 
+            select(Partido, n.x, n.y) %>%
+            replace(is.na(.), 0) %>% 
+            mutate(prop=round(100*(n.y/n.x),0))
+
+Sen$Partido <- factor(Sen$Partido, levels = c("FA", "PN", "PC", "CA","PI", "PG", "PE"))
+
+
+Min <- MinistrosConf %>% left_join(ConteoM, by=c("Partido")) %>% 
+            select(Partido, n.x, n.y) %>%
+            replace(is.na(.), 0) %>% 
+            mutate(prop=round(100*(n.y/n.x),0))
+
+Min$Partido <- factor(Min$Partido, levels = c("PN", "PC", "CA","PI"))
+
+```
+
+
+Gráficos Funcionarios - Porcentuales
+
+```{r, include=FALSE}
+DipGraf <- ggplot(Dip, aes(x=Partido, y=prop)) + 
+                geom_col(fill = c("chocolate1", "cornflowerblue", "brown2", "darkgoldenrod1", 
+                                  "darkgray", "darkgray", "darkgray")) +
+                ggtitle("Diputados") +
+                xlab("Partido") + ylab("%") +
+                ylim(0,100) +
+                geom_text(aes(label = prop), size = 3.5, hjust = 0.5, vjust = 0.5,, family="Times") +
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
+
+SenGraf <- ggplot(Sen, aes(x=Partido, y=prop)) + 
+                geom_col(fill = c("chocolate1", "cornflowerblue", 
+                                  "brown2", "darkgoldenrod1")) +
+                ggtitle("Senadores") +
+                xlab("Partido") + ylab("%") +
+                ylim(0,100) +
+                geom_text(aes(label = prop), size = 3.5, hjust = 0.5, vjust = 0.5, family="Times") +
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
+
+MinGraf <- ggplot(Min, aes(x=Partido, y=prop)) + 
+                geom_col(fill = c("cornflowerblue","brown2","darkgoldenrod1", "darkmagenta")) +
+                ggtitle("Ministros") +
+                xlab("Partido") + ylab("%") +
+                ylim(0,100) +
+                geom_text(aes(label = prop), size = 3.2, hjust = 0.5, vjust = 0.5, family="Times") +
+                theme_minimal() +
+                theme(text=element_text(size=12, family="Times"))
+
+```
+
+```{r, include=FALSE}
+
+jpeg(filename = "Figures/Final figures/TweetsFuncionarios.jpg", 
+     width = 3200, height = 1800, res = 300)
+
+DipGraf + (SenGraf / MinGraf)
+
+dev.off()
+```
 
 
